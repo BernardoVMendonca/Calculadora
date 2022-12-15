@@ -7,8 +7,8 @@ export const Container = styled.button`
   text-align: center;
   background-color: white;
   color: gray;
-  ${({variant}) =>
-    variant !== "number" && css`
+  ${({type}) =>
+    type !== "number" && css`
       background-color: orange;
     `}
     &:hover{
