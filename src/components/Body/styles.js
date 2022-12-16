@@ -17,7 +17,7 @@ export const Screen = styled.div`
     background-color: green;
     font-family: "Syncopate";
     text-align: end;
-    font-size: 10vh;
+    font-size: 9vh;
 `
 
 export const Row = styled.div`
