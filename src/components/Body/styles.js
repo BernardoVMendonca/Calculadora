@@ -13,6 +13,7 @@ export const Wrapper = styled.div`
 export const Screen = styled.div`
     width: 100%;
     height: 16vh;
+    max-height: 16vh;
     background-color: green;
     font-family: "Syncopate";
     text-align: end;

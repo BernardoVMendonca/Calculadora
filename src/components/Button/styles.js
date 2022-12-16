@@ -7,11 +7,12 @@ export const Container = styled.button`
   text-align: center;
   background-color: white;
   color: gray;
-  ${({type}) =>
-    type !== "number" && css`
+  ${({ type }) =>
+    type !== "number" &&
+    css`
       background-color: orange;
     `}
-    &:hover{
-        color:black;
-    }
+  &:hover {
+    color: black;
+  }
 `;

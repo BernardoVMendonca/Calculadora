@@ -40,8 +40,8 @@ const Body = () => {
               onClick={handleChangeScreenValue}
             />
             <Button
-              value={"back"}
-              type="backSpace"
+              value={"π"}
+              type="pi"
               onClick={handleChangeScreenValue}
             />
             <Button

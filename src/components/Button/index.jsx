@@ -3,128 +3,196 @@ import { Container } from "./styles";
 import { ValueContext } from "../../Context/ValueContext";
 
 const Button = ({ value, variant, type, onClick }) => {
-  const valueContext = useContext(ValueContext);
+  const context = useContext(ValueContext);
 
   const handlePop = () => {
-    valueContext.value.pop();
-    valueContext.type.pop();
+    context.value.pop();
+    context.type.pop();
   };
   const handleClean = () => {
-    valueContext.value.splice(0, valueContext.value.length);
-    valueContext.type.splice(0, valueContext.type.length);
+    context.numberDigits = 0;
+    context.dotCheck = false;
+    context.floatFactor = 0.1;
+    context.value.splice(0, context.value.length);
+    context.type.splice(0, context.type.length);
+    context.therms = 0;
   };
-  const handleInsert = (newValue, newType) => {
-    if (valueContext.value.length === 15) {
-      alert("15 is the number maximum of digits");
-      return;
-    }
-    if (valueContext.type.length === 0) {
-      valueContext.dotCheck.push(false);
-    }
-    if (newValue === undefined && newType === undefined) {
-      if (type === "power") {
-        newValue = "^";
-      } else if (type === "dot") {
-        valueContext.dotCheck.pop();
-        valueContext.dotCheck.push(true);
-      } else if (type != "number") {
-        valueContext.dotCheck.pop();
-        valueContext.dotCheck.push(false);
-      }
 
+  const handleInsert = (newValue, newType) => {
+    if (context.numberDigits === 9) {
+      alert("9 is the number maximum of digits");
+      return;
+    } else if (context.floatFactor === 0.0001 && type === "number") {
+      alert("3 is the number maximum of float digits");
+      return;
+    } else if (context.therms === 3 && type !== "dot") {
+      if (
+        context.dotCheck === false ||
+        (context.dotCheck === true && type !== "number")
+      ) {
+        alert("3 is the number maximum of therms");
+        return;
+      }
+    }
+    if (type !== "dot") context.numberDigits++;
+    if (newValue === undefined && newType === undefined) {
       newValue = value;
       newType = type;
+      if (type === "power") newValue = "^";
+      else if (type === "dot") context.dotCheck = true;
+      else if (type !== "number") context.dotCheck = false;
     }
     if (
       type === "number" &&
-      valueContext.type[valueContext.type.length - 1] === "number"
+      context.type[context.type.length - 1] === "number" &&
+      context.dotCheck === false
     ) {
+      context.value[context.value.length - 1] *= 10;
+      context.value[context.value.length - 1] += value;
+      return;
+    } else if (type === "number" && context.dotCheck === true) {
+      if (context.type[context.type.length - 1] === "dot") handlePop();
+      context.value[context.value.length - 1] *= context.floatFactor ** -1;
+      context.value[context.value.length - 1] += value;
+      context.value[context.value.length - 1] /= context.floatFactor ** -1;
+      context.floatFactor /= 10;
+
+      return;
     }
-    valueContext.value.push(newValue);
-    valueContext.type.push(newType);
+    if (type !== "dot" || context.dotCheck === false) context.therms++;
+
+    context.floatFactor = 0.1;
+
+    context.value.push(newValue);
+    context.type.push(newType);
   };
 
   const handleCalc = () => {
-    const result = 0;
+    let result = 0;
+    let i = 0;
+    for (; i < 3; i++) {
+      if (context.type[i] !== "number" && context.type[i] !== "pi") break;
+    }
+    if (context.type[i] === "square") {
+      if (context.type[i + 1] === "pi") context.value[i + 1] = 3.14;
+      result = context.value[i + 1] ** 1 / 2;
+    } else if (context.type[i] === "power") {
+      if (context.type[i - 1] === "pi") context.value[i - 1] = 3.14;
+      if (context.type[i + 1] === "pi") context.value[i + 1] = 3.14;
+      result = context.value[i - 1] ** context.value[i + 1];
+    } else if (context.type[i] === "operation") {
+      if (context.type[i - 1] === "pi") context.value[i - 1] = 3.14;
+      if (context.type[i + 1] === "pi") context.value[i + 1] = 3.14;
+      switch (context.value[i]) {
+        case "+":
+          result = context.value[i - 1] + context.value[i + 1];
+          break;
+        case "-":
+          result = context.value[i - 1] - context.value[i + 1];
+          break;
+        case "x":
+          result = context.value[i - 1] * context.value[i + 1];
+          break;
+        case "/":
+          if (context.value[i + 1] === 0) {
+            alert("It's not possible to divide to 0");
+            break;
+          }
+          result = context.value[i - 1] / context.value[i + 1];
+          break;
+      }
+    }
     handleClean();
     handleInsert(result, "number");
   };
 
-  const handleButtonClick = () => {
-    /*----------DEBUG----------*/
-    // console.log("Type: " + valueContext.type);
-    // console.log("Value: " + valueContext.value);
-    console.log("DotCheck: " + valueContext.dotCheck);
-    // console.log("Length: " + valueContext.type.length);
-
+  const handleError = () => {
+    let error;
     if (
-      valueContext.type.length === 0 &&
+      context.type.length === 0 &&
       (type === "power" ||
         type === "dot" ||
         type === "operation" ||
         type === "equal")
-    ) {
-      console.log("Error: " + 0);
-      return;
-    } else if (type === "clean") {
-      handleClean();
-      onClick();
-      return;
-    } else if (type === "backSpace") {
-      handlePop();
-      onClick();
-      return;
-    } else if (
-      valueContext.type[valueContext.type.length - 1] === "number" &&
-      type === "square"
-    ) {
-      console.log("Error: " + 1);
-      return;
-    } else if (
-      valueContext.type[valueContext.type.length - 1] === "operation" &&
+    )
+      error = 0;
+    else if (
+      context.type[context.type.length - 1] === "number" &&
+      (type === "square" || type === "pi")
+    )
+      error = 1;
+    else if (
+      context.type[context.type.length - 1] === "operation" &&
+      type !== "number" &&
       type !== "square" &&
+      type !== "pi"
+    )
+      error = 2;
+    else if (
+      context.type[context.type.length - 1] === "dot" &&
       type !== "number"
-    ) {
-      console.log("Error: " + 2);
-      return;
-    } else if (
-      valueContext.type[valueContext.type.length - 1] === "dot" &&
-      type !== "number"
-    ) {
-      console.log("Error: " + 3);
-      return;
-    } else if (
-      valueContext.type[valueContext.type.length - 1] === "power" &&
-      type !== "number"
-    ) {
-      console.log("Error: " + 4);
-      return;
-    } else if (
-      valueContext.type[valueContext.type.length - 1] === "square" &&
-      type !== "number"
-    ) {
-      console.log("Error: " + 5);
-      return;
-    } else if (
+    )
+      error = 3;
+    else if (
+      context.type[context.type.length - 1] === "power" &&
+      type !== "number" &&
+      type !== "pi"
+    )
+      error = 4;
+    else if (
+      context.type[context.type.length - 1] === "square" &&
+      type !== "number" &&
+      type !== "pi"
+    )
+      error = 5;
+    else if (
       type === "equal" &&
-      valueContext.type[valueContext.type.length - 1] !== "number"
-    ) {
-      console.log("Error: " + 6);
-      return;
-    } else if (type === "dot" && valueContext.dotCheck[0] === true) {
-      console.log("Error: " + 7);
-      return;
-    }
-    if (
+      context.type[context.type.length - 1] !== "number" &&
+      context.type[context.type.length - 1] !== "pi"
+    )
+      error = 6;
+    else if (
+      type === "dot" &&
+      (context.dotCheck === true ||
+        context.type[context.type.length - 1] === "pi")
+    )
+      error = 7;
+    else if (
+      context.type[context.type.length - 1] === "pi" &&
+      (type === "square" || type === "number")
+    )
+      error = 8;
+
+    return error;
+  };
+
+  const handleButtonClick = () => {
+    /*----------DEBUG----------*/
+    // console.log("Type: " + context.type);
+    // console.log("Value: " + context.value);
+    // console.log("DotCheck: " + context.dotCheck);
+    // console.log("FloatFactor: " + context.floatFactor);
+    // console.log("NumberDigits: " + context.numberDigits);
+    // console.log("Length: " + context.type.length);
+    // console.log("Therms: " + context.therms);
+
+    if (type === "clean") handleClean();
+    else if (
       type === "equal" &&
-      valueContext.type[valueContext.type.length - 1] === "number"
-    ) {
+      (context.type[context.type.length - 1] === "number" ||
+        context.type[context.type.length - 1] === "pi")
+    )
       handleCalc();
-      onClick();
-      return;
+    else {
+      const error = handleError();
+      if (error !== undefined) {
+        console.log("Error: " + error);
+        return;
+      }
+
+      handleInsert();
     }
 
-    handleInsert();
     onClick();
     return;
   };
